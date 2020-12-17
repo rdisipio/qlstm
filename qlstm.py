@@ -36,7 +36,8 @@ class QLSTM(nn.Module):
 
         self.clayer_in = torch.nn.Linear(self.concat_size, n_qubits)
         self.VQC = [qml.qnn.TorchLayer(self.qlayer, weight_shapes) for _ in range(4)]
-        self.clayer_out = [torch.nn.Linear(n_qubits, self.hidden_size) for _ in range(4)]
+        self.clayer_out = torch.nn.Linear(n_qubits, self.hidden_size)
+        #self.clayer_out = [torch.nn.Linear(n_qubits, self.hidden_size) for _ in range(4)]
 
     def forward(self, x, init_states=None):
         '''
@@ -67,12 +68,13 @@ class QLSTM(nn.Module):
             # Concatenate input and hidden state
             v_t = torch.cat((h_t, x_t), dim=1)
 
+            # match qubit dimension
             y_t = self.clayer_in(v_t)
 
-            f_t = torch.sigmoid(self.clayer_out[0](self.VQC[0](y_t)))  # forget block
-            i_t = torch.sigmoid(self.clayer_out[1](self.VQC[1](y_t)))  # input block
-            g_t = torch.tanh(self.clayer_out[2](self.VQC[2](y_t)))  # update block
-            o_t = torch.sigmoid(self.clayer_out[3](self.VQC[3](y_t))) # output block
+            f_t = torch.sigmoid(self.clayer_out(self.VQC[0](y_t)))  # forget block
+            i_t = torch.sigmoid(self.clayer_out(self.VQC[1](y_t)))  # input block
+            g_t = torch.tanh(self.clayer_out(self.VQC[2](y_t)))  # update block
+            o_t = torch.sigmoid(self.clayer_out(self.VQC[3](y_t))) # output block
 
             c_t = (f_t * c_t) + (i_t * g_t)
             h_t = o_t * torch.tanh(c_t)
