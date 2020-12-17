@@ -36,7 +36,7 @@ class QLSTM(nn.Module):
 
         self.clayer_in = torch.nn.Linear(self.concat_size, n_qubits)
         self.VQC = [qml.qnn.TorchLayer(self.qlayer, weight_shapes) for _ in range(4)]
-        self.clayer_out = torch.nn.Linear(n_qubits, self.hidden_size)
+        self.clayer_out = torch.nn.Linear(self.n_qubits, self.hidden_size)
         #self.clayer_out = [torch.nn.Linear(n_qubits, self.hidden_size) for _ in range(4)]
 
     def forward(self, x, init_states=None):
