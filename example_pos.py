@@ -2,6 +2,8 @@
 
 # see tutorial: https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html
 
+import argparse
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -45,8 +47,10 @@ class LSTMTagger(nn.Module):
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
         if n_qubits > 0:
+            print("Tagger will use Quantum LSTM")
             self.lstm = QLSTM(embedding_dim, hidden_dim, n_qubits=n_qubits)
         else:
+            print("Tagger will use Classical LSTM")
             self.lstm = nn.LSTM(embedding_dim, hidden_dim)
 
         # The linear layer that maps from hidden state space to tag space
@@ -63,21 +67,28 @@ class LSTMTagger(nn.Module):
 if __name__ == '__main__':
     # These will usually be more like 32 or 64 dimensional.
     # We will keep them small, so we can see how the weights change as we train.
-    EMBEDDING_DIM = 6
-    HIDDEN_DIM = 6
-    N_QUBITS = 0
-    N_EPOCHS = 300
+    parser = argparse.ArgumentParser("QLSTM Example")
+    parser.add_argument('-E', '--embedding_dim', default=8, type=int)
+    parser.add_argument('-H', '--hidden_dim', default=6, type=int)
+    parser.add_argument('-Q', '--n_qubits', default=0, type=int)
+    parser.add_argument('-e', '--n_epochs', default=300, type=int)
+    args = parser.parse_args()
 
-    model = LSTMTagger(EMBEDDING_DIM, 
-                        HIDDEN_DIM, 
+    print(f"Embedding dim:    {args.embedding_dim}")
+    print(f"LSTM output size: {args.hidden_dim}")
+    print(f"Number of qubits: {args.n_qubits}")
+    print(f"Training epochs:  {args.n_epochs}")
+
+    model = LSTMTagger(args.embedding_dim, 
+                        args.hidden_dim, 
                         vocab_size=len(word_to_ix), 
                         tagset_size=len(tag_to_ix), 
-                        n_qubits=N_QUBITS)
+                        n_qubits=args.n_qubits)
 
     loss_function = nn.NLLLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
-    for epoch in range(N_EPOCHS):
+    for epoch in range(args.n_epochs):
         losses = []
         for sentence, tags in training_data:
             # Step 1. Remember that Pytorch accumulates gradients.
@@ -99,7 +110,7 @@ if __name__ == '__main__':
             optimizer.step()
             losses.append(float(loss))
         avg_loss = np.mean(losses)
-        print("Epoch {} / {}: Loss = {:.3f}".format(epoch+1, N_EPOCHS, avg_loss))
+        print("Epoch {} / {}: Loss = {:.3f}".format(epoch+1, args.n_epochs, avg_loss))
 
     # See what the scores are after training
     with torch.no_grad():
