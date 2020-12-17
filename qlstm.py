@@ -28,7 +28,7 @@ class QLSTM(nn.Module):
         def _circuit(inputs, weights):
             qml.templates.AngleEmbedding(inputs, wires=range(self.n_qubits))
             qml.templates.BasicEntanglerLayers(weights, wires=range(self.n_qubits))
-            return [qml.expval(qml.PauliZ(wires=i)) for i in range(n_qubits)]
+            return [qml.expval(qml.PauliZ(wires=i)) for i in range(self.n_qubits)]
         self.qlayer = qml.QNode(_circuit, self.dev, interface="torch")
 
         weight_shapes = {"weights": (n_qlayers, n_qubits)}
@@ -70,9 +70,9 @@ class QLSTM(nn.Module):
             y_t = self.clayer_in(v_t)
 
             f_t = torch.sigmoid(self.clayer_out[0](self.VQC[0](y_t)))  # forget block
-            i_t = torch.sigmoid(self.clayer_out[0](self.VQC[1](y_t)))  # input block
-            g_t = torch.tanh(self.clayer_out[0](self.VQC[2](y_t)))  # update block
-            o_t = torch.sigmoid(self.clayer_out[0](self.VQC[3](y_t))) # output block
+            i_t = torch.sigmoid(self.clayer_out[1](self.VQC[1](y_t)))  # input block
+            g_t = torch.tanh(self.clayer_out[2](self.VQC[2](y_t)))  # update block
+            o_t = torch.sigmoid(self.clayer_out[3](self.VQC[3](y_t))) # output block
 
             c_t = (f_t * c_t) + (i_t * g_t)
             h_t = o_t * torch.tanh(c_t)
