@@ -131,7 +131,17 @@ if __name__ == '__main__':
         print(f"Labels:    {labels}")
         print(f"Predicted: {tag_labels}")
     
-    plt.plot(history['loss'])
+    lstm_choice = "classical" if args.n_qubits == 0 else "quantum"
+
+    plt.figure(figsize=(6, 4))
+    plt.plot(history['loss'], label=f"{lstm_choice} LSTM")
+    plt.title("POS Tagger Training")
     plt.ylabel("Loss")
     plt.xlabel("Epoch")
+    plt.ylim(0., 1.5)
+    plt.legend(loc="upper right")
+
+    plt.savefig(f"training_{lstm_choice}.png")
     plt.show()
+
+    
