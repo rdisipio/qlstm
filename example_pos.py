@@ -12,6 +12,8 @@ import torch.optim as optim
 
 from qlstm import QLSTM
 
+from matplotlib import pyplot as plt
+
 tag_to_ix = {"DET": 0, "NN": 1, "V": 2}  # Assign each tag with a unique index
 ix_to_tag = {i:k for k,i in tag_to_ix.items()}
 
@@ -88,6 +90,9 @@ if __name__ == '__main__':
     loss_function = nn.NLLLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
+    history = {
+        'loss': []
+    }
     for epoch in range(args.n_epochs):
         losses = []
         for sentence, tags in training_data:
@@ -110,6 +115,7 @@ if __name__ == '__main__':
             optimizer.step()
             losses.append(float(loss))
         avg_loss = np.mean(losses)
+        history['loss'].append(avg_loss)
         print("Epoch {} / {}: Loss = {:.3f}".format(epoch+1, args.n_epochs, avg_loss))
 
     # See what the scores are after training
@@ -125,3 +131,7 @@ if __name__ == '__main__':
         print(f"Labels:    {labels}")
         print(f"Predicted: {tag_labels}")
     
+    plt.plot(history['loss'])
+    plt.ylabel("Loss")
+    plt.xlabel("Epoch")
+    plt.show()
