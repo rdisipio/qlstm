@@ -19,6 +19,6 @@ Test if it works with the classical LSTM from PyTorch:
 $ ./example_pos.py -E 8 -H 4 -Q 0 -e 300
 ```
 
-If everything works, you should see something like this:
+If everything works, you should see a training history like this:
 
 ![alt text](training_cl_vs_qu.png)
