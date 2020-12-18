@@ -21,9 +21,5 @@ $ ./example_pos.py -E 8 -H 4 -Q 0 -e 300
 
 If everything works, you should see something like this:
 
-Trainin the POS tagger with classical LSTM:
-![alt text](training_classical.png)
-
-Trainin the POS tagger with quantum LSTM:
-![alt text](training_quantum.png)
-
+Trainin the POS tagger with classical and quantum LSTM:
+![alt text](training_cl_vs_qu.png)
