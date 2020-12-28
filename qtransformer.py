@@ -152,7 +152,6 @@ class TextClassifier(nn.Module):
         num_classes: int,
         vocab_size: int,
         dropout=0.1,
-        use_max_pool=False
         ):
         super(Classifier, self).__init__()
         self.embed_dim = embed_dim
@@ -160,7 +159,6 @@ class TextClassifier(nn.Module):
         self.num_blocks = num_blocks
         self.num_classes = num_classes
         self.vocab_size = vocab_size
-        self.use_max_pool = use_max_pool
 
         self.token_embedding = TokenEmbedding(embed_dim, vocab_size)
         self.pos_embedding = PositionalEncoding(embed_dim)
@@ -176,8 +174,9 @@ class TextClassifier(nn.Module):
         tokens = self.token_embedding(x)
         batch_size, seq_len, embed_dim = x.shape()
         x = self.pos_embedding(tokens)
-        x = self.dropout(x)
         x = self.transformers(x)
-        x = x.max(dim=1)[0] if self.use_max_pool else x.mean(dim=1)
+        x = x.mean(dim=1)  # global average pooling, works in 1D
+        x = self.dropout(x)
         x = self.class_logits(x)
         return F.log_softmax(x, dim=1)
+
