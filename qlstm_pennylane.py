@@ -25,17 +25,45 @@ class QLSTM(nn.Module):
         self.return_state = return_state
 
         self.dev = qml.device("default.qubit", wires=self.n_qubits)
-        def _circuit(inputs, weights):
-            qml.templates.AngleEmbedding(inputs, wires=range(self.n_qubits))
-            qml.templates.BasicEntanglerLayers(weights, wires=range(self.n_qubits))
-            return [qml.expval(qml.PauliZ(wires=i)) for i in range(self.n_qubits)]
-        self.qlayer = qml.QNode(_circuit, self.dev, interface="torch")
+
+        def _circuit_forget(inputs, weights):
+            wires = [f"wire_forget_{i}" for i in range(self.n_qubits)]
+            qml.templates.AngleEmbedding(inputs, wires=wires)
+            qml.templates.BasicEntanglerLayers(weights, wires=wires)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
+        self.qlayer_forget = qml.QNode(_circuit_forget, self.dev, interface="torch")
+
+        def _circuit_input(inputs, weights):
+            wires = [f"wire_input_{i}" for i in range(self.n_qubits)]
+            qml.templates.AngleEmbedding(inputs, wires=wires)
+            qml.templates.BasicEntanglerLayers(weights, wires=wires)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
+        self.qlayer_input = qml.QNode(_circuit_input, self.dev, interface="torch")
+
+        def _circuit_update(inputs, weights):
+            wires = [f"wire_update_{i}" for i in range(self.n_qubits)]
+            qml.templates.AngleEmbedding(inputs, wires=wires)
+            qml.templates.BasicEntanglerLayers(weights, wires=wires)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
+        self.qlayer_update = qml.QNode(_circuit_update, self.dev, interface="torch")
+
+        def _circuit_output(inputs, weights):
+            wires = [f"wire_output_{i}" for i in range(self.n_qubits)]
+            qml.templates.AngleEmbedding(inputs, wires=wires)
+            qml.templates.BasicEntanglerLayers(weights, wires=wires)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
+        self.qlayer_output = qml.QNode(_circuit_output, self.dev, interface="torch")
 
         weight_shapes = {"weights": (n_qlayers, n_qubits)}
         print(f"weight_shapes = (n_qlayers, n_qubits) = ({n_qlayers}, {n_qubits})")
 
         self.clayer_in = torch.nn.Linear(self.concat_size, n_qubits)
-        self.VQC = [qml.qnn.TorchLayer(self.qlayer, weight_shapes) for _ in range(4)]
+        self.VQC = {
+            'forget': qml.qnn.TorchLayer(self.qlayer_forget, weight_shapes),
+            'input': qml.qnn.TorchLayer(self.qlayer_input, weight_shapes),
+            'update': qml.qnn.TorchLayer(self.qlayer_update, weight_shapes),
+            'output': qml.qnn.TorchLayer(self.qlayer_output, weight_shapes)
+        }
         self.clayer_out = torch.nn.Linear(self.n_qubits, self.hidden_size)
         #self.clayer_out = [torch.nn.Linear(n_qubits, self.hidden_size) for _ in range(4)]
 
@@ -71,10 +99,10 @@ class QLSTM(nn.Module):
             # match qubit dimension
             y_t = self.clayer_in(v_t)
 
-            f_t = torch.sigmoid(self.clayer_out(self.VQC[0](y_t)))  # forget block
-            i_t = torch.sigmoid(self.clayer_out(self.VQC[1](y_t)))  # input block
-            g_t = torch.tanh(self.clayer_out(self.VQC[2](y_t)))  # update block
-            o_t = torch.sigmoid(self.clayer_out(self.VQC[3](y_t))) # output block
+            f_t = torch.sigmoid(self.clayer_out(self.VQC['forget'](y_t)))  # forget block
+            i_t = torch.sigmoid(self.clayer_out(self.VQC['input'](y_t)))  # input block
+            g_t = torch.tanh(self.clayer_out(self.VQC['update'](y_t)))  # update block
+            o_t = torch.sigmoid(self.clayer_out(self.VQC['output'](y_t))) # output block
 
             c_t = (f_t * c_t) + (i_t * g_t)
             h_t = o_t * torch.tanh(c_t)

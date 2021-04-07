@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-from qlstm import QLSTM
+from qlstm_pennylane import QLSTM
 
 from matplotlib import pyplot as plt
 
