@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 
 vocab = [
-    'pad', 'sos', 'eos',
+    '[pad]', '[sos]', '[eos]',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
     'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'y', 'x', 'z',
     '1', '2', '3', '4', '5', '6', '7', '8', '9', '0',
@@ -23,7 +23,7 @@ def tokenize(text: str):
     text = text.lower().strip()
     tokens_str = [x for x in text]
     token_ids = [char2id[c] for c in tokens_str]
-    token_ids = [char2id['sos']] + token_ids + [char2id['eos']]
+    token_ids = [char2id['[sos]']] + token_ids + [char2id['[eos]']]
     return token_ids
 
 

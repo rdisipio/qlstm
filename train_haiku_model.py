@@ -86,8 +86,8 @@ class HaikuLM(pl.LightningModule):
 
 
 if __name__ == '__main__':
-    EPOCHS = 10
-    BATCH_SIZE = 32
+    EPOCHS = 1
+    BATCH_SIZE = 512
     WINDOW_SIZE = 20
     EMBED_DIM = 4
     HIDDEN_DIM = 8
