@@ -40,7 +40,7 @@ print(f"Entities: {ix_to_tag}")
 
 class LSTMTagger(nn.Module):
 
-    def __init__(self, embedding_dim, hidden_dim, vocab_size, tagset_size, n_qubits=0):
+    def __init__(self, embedding_dim, hidden_dim, vocab_size, tagset_size, n_qubits=0, backend='default.qubit'):
         super(LSTMTagger, self).__init__()
         self.hidden_dim = hidden_dim
 
@@ -50,7 +50,7 @@ class LSTMTagger(nn.Module):
         # with dimensionality hidden_dim.
         if n_qubits > 0:
             print("Tagger will use Quantum LSTM")
-            self.lstm = QLSTM(embedding_dim, hidden_dim, n_qubits=n_qubits)
+            self.lstm = QLSTM(embedding_dim, hidden_dim, n_qubits=n_qubits, backend=backend)
         else:
             print("Tagger will use Classical LSTM")
             self.lstm = nn.LSTM(embedding_dim, hidden_dim)
@@ -74,6 +74,7 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hidden_dim', default=6, type=int)
     parser.add_argument('-Q', '--n_qubits', default=0, type=int)
     parser.add_argument('-e', '--n_epochs', default=300, type=int)
+    parser.add_argument('-B', '--backend', default='default.qubit')
     args = parser.parse_args()
 
     print(f"Embedding dim:    {args.embedding_dim}")

@@ -12,7 +12,8 @@ class QLSTM(nn.Module):
                 n_qlayers=1,
                 batch_first=True,
                 return_sequences=False, 
-                return_state=False):
+                return_state=False,
+                backend="default.qubit"):
         super(QLSTM, self).__init__()
         self.n_inputs = input_size
         self.hidden_size = hidden_size
@@ -29,7 +30,7 @@ class QLSTM(nn.Module):
         #self.dev = qml.device('qiskit.ibm', wires=self.n_qubits)
         # use 'qiskit.ibm' instead to run on hardware
 
-        qdevice = "default.qubit"  # "qiskit.basicaer", "qiskit.ibm"
+        self.backend = backend  # "default.qubit", "qiskit.basicaer", "qiskit.ibm"
 
         self.wires_forget = [f"wire_forget_{i}" for i in range(self.n_qubits)]
         self.wires_input = [f"wire_input_{i}" for i in range(self.n_qubits)]
