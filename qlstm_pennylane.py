@@ -24,35 +24,46 @@ class QLSTM(nn.Module):
         self.return_sequences = return_sequences
         self.return_state = return_state
 
-        self.dev = qml.device("default.qubit", wires=self.n_qubits)
+        #self.dev = qml.device("default.qubit", wires=self.n_qubits)
+        #self.dev = qml.device('qiskit.basicaer', wires=self.n_qubits)
+        #self.dev = qml.device('qiskit.ibm', wires=self.n_qubits)
+        # use 'qiskit.ibm' instead to run on hardware
+
+        qdevice = "default.qubit"  # "qiskit.basicaer", "qiskit.ibm"
+
+        self.wires_forget = [f"wire_forget_{i}" for i in range(self.n_qubits)]
+        self.wires_input = [f"wire_input_{i}" for i in range(self.n_qubits)]
+        self.wires_update = [f"wire_update_{i}" for i in range(self.n_qubits)]
+        self.wires_output = [f"wire_output_{i}" for i in range(self.n_qubits)]
+
+        self.dev_forget = qml.device("default.qubit", wires=self.wires_forget)
+        self.dev_input = qml.device("default.qubit", wires=self.wires_input)
+        self.dev_update = qml.device("default.qubit", wires=self.wires_update)
+        self.dev_output = qml.device("default.qubit", wires=self.wires_output)
 
         def _circuit_forget(inputs, weights):
-            wires = [f"wire_forget_{i}" for i in range(self.n_qubits)]
-            qml.templates.AngleEmbedding(inputs, wires=wires)
-            qml.templates.BasicEntanglerLayers(weights, wires=wires)
-            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
-        self.qlayer_forget = qml.QNode(_circuit_forget, self.dev, interface="torch")
+            qml.templates.AngleEmbedding(inputs, wires=self.wires_forget)
+            qml.templates.BasicEntanglerLayers(weights, wires=self.wires_forget)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in self.wires_forget]
+        self.qlayer_forget = qml.QNode(_circuit_forget, self.dev_forget, interface="torch")
 
         def _circuit_input(inputs, weights):
-            wires = [f"wire_input_{i}" for i in range(self.n_qubits)]
-            qml.templates.AngleEmbedding(inputs, wires=wires)
-            qml.templates.BasicEntanglerLayers(weights, wires=wires)
-            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
-        self.qlayer_input = qml.QNode(_circuit_input, self.dev, interface="torch")
+            qml.templates.AngleEmbedding(inputs, wires=self.wires_input)
+            qml.templates.BasicEntanglerLayers(weights, wires=self.wires_input)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in self.wires_input]
+        self.qlayer_input = qml.QNode(_circuit_input, self.dev_input, interface="torch")
 
         def _circuit_update(inputs, weights):
-            wires = [f"wire_update_{i}" for i in range(self.n_qubits)]
-            qml.templates.AngleEmbedding(inputs, wires=wires)
-            qml.templates.BasicEntanglerLayers(weights, wires=wires)
-            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
-        self.qlayer_update = qml.QNode(_circuit_update, self.dev, interface="torch")
+            qml.templates.AngleEmbedding(inputs, wires=self.wires_update)
+            qml.templates.BasicEntanglerLayers(weights, wires=self.wires_update)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in self.wires_update]
+        self.qlayer_update = qml.QNode(_circuit_update, self.dev_update, interface="torch")
 
         def _circuit_output(inputs, weights):
-            wires = [f"wire_output_{i}" for i in range(self.n_qubits)]
-            qml.templates.AngleEmbedding(inputs, wires=wires)
-            qml.templates.BasicEntanglerLayers(weights, wires=wires)
-            return [qml.expval(qml.PauliZ(wires=w)) for w in wires]
-        self.qlayer_output = qml.QNode(_circuit_output, self.dev, interface="torch")
+            qml.templates.AngleEmbedding(inputs, wires=self.wires_output)
+            qml.templates.BasicEntanglerLayers(weights, wires=self.wires_output)
+            return [qml.expval(qml.PauliZ(wires=w)) for w in self.wires_output]
+        self.qlayer_output = qml.QNode(_circuit_output, self.dev_output, interface="torch")
 
         weight_shapes = {"weights": (n_qlayers, n_qubits)}
         print(f"weight_shapes = (n_qlayers, n_qubits) = ({n_qlayers}, {n_qubits})")
