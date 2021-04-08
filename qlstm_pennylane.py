@@ -20,6 +20,7 @@ class QLSTM(nn.Module):
         self.concat_size = self.n_inputs + self.hidden_size
         self.n_qubits = n_qubits
         self.n_qlayers = n_qlayers
+        self.backend = backend  # "default.qubit", "qiskit.basicaer", "qiskit.ibm"
 
         self.batch_first = batch_first
         self.return_sequences = return_sequences
@@ -28,19 +29,17 @@ class QLSTM(nn.Module):
         #self.dev = qml.device("default.qubit", wires=self.n_qubits)
         #self.dev = qml.device('qiskit.basicaer', wires=self.n_qubits)
         #self.dev = qml.device('qiskit.ibm', wires=self.n_qubits)
-        # use 'qiskit.ibm' instead to run on hardware
-
-        self.backend = backend  # "default.qubit", "qiskit.basicaer", "qiskit.ibm"
+        # use 'qiskit.ibmq' instead to run on hardware
 
         self.wires_forget = [f"wire_forget_{i}" for i in range(self.n_qubits)]
         self.wires_input = [f"wire_input_{i}" for i in range(self.n_qubits)]
         self.wires_update = [f"wire_update_{i}" for i in range(self.n_qubits)]
         self.wires_output = [f"wire_output_{i}" for i in range(self.n_qubits)]
 
-        self.dev_forget = qml.device("default.qubit", wires=self.wires_forget)
-        self.dev_input = qml.device("default.qubit", wires=self.wires_input)
-        self.dev_update = qml.device("default.qubit", wires=self.wires_update)
-        self.dev_output = qml.device("default.qubit", wires=self.wires_output)
+        self.dev_forget = qml.device(self.backend, wires=self.wires_forget)
+        self.dev_input = qml.device(self.backend, wires=self.wires_input)
+        self.dev_update = qml.device(self.backend, wires=self.wires_update)
+        self.dev_output = qml.device(self.backend, wires=self.wires_output)
 
         def _circuit_forget(inputs, weights):
             qml.templates.AngleEmbedding(inputs, wires=self.wires_forget)

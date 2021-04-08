@@ -49,7 +49,7 @@ class LSTMTagger(nn.Module):
         # The LSTM takes word embeddings as inputs, and outputs hidden states
         # with dimensionality hidden_dim.
         if n_qubits > 0:
-            print("Tagger will use Quantum LSTM")
+            print(f"Tagger will use Quantum LSTM running on backend {backend}")
             self.lstm = QLSTM(embedding_dim, hidden_dim, n_qubits=n_qubits, backend=backend)
         else:
             print("Tagger will use Classical LSTM")
@@ -86,7 +86,8 @@ if __name__ == '__main__':
                         args.hidden_dim, 
                         vocab_size=len(word_to_ix), 
                         tagset_size=len(tag_to_ix), 
-                        n_qubits=args.n_qubits)
+                        n_qubits=args.n_qubits,
+                        backend=args.backend)
 
     loss_function = nn.NLLLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.1)
