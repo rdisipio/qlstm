@@ -40,8 +40,11 @@ class HaikuLM(pl.LightningModule):
         self.lr = lr
 
         self.embeddings = nn.Embedding(vocab_size, embed_dim)
-        self.lstm = nn.LSTM(embed_dim, hidden_dim)
-        #self.lstm = QLSTM(embed_dim, hidden_dim)
+
+        if n_qubits == 0:
+            self.lstm = nn.LSTM(embed_dim, hidden_dim)
+        else:
+            self.lstm = QLSTM(embed_dim, hidden_dim)
         self.hidden2id = nn.Linear(hidden_dim, vocab_size)
         #self.criterion = nn.NLLLoss()
         self.criterion = nn.CrossEntropyLoss()
