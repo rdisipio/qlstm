@@ -93,10 +93,13 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=0.1)
 
     history = {
-        'loss': []
+        'loss': [],
+        'acc': []
     }
     for epoch in range(args.n_epochs):
         losses = []
+        preds = []
+        targets = []
         for sentence, tags in training_data:
             # Step 1. Remember that Pytorch accumulates gradients.
             # We need to clear them out before each instance
@@ -105,20 +108,32 @@ if __name__ == '__main__':
             # Step 2. Get our inputs ready for the network, that is, turn them into
             # Tensors of word indices.
             sentence_in = prepare_sequence(sentence, word_to_ix)
-            targets = prepare_sequence(tags, tag_to_ix)
+            labels = prepare_sequence(tags, tag_to_ix)
 
             # Step 3. Run our forward pass.
             tag_scores = model(sentence_in)
 
             # Step 4. Compute the loss, gradients, and update the parameters by
             #  calling optimizer.step()
-            loss = loss_function(tag_scores, targets)
+            loss = loss_function(tag_scores, labels)
             loss.backward()
             optimizer.step()
             losses.append(float(loss))
+
+            probs = torch.softmax(tag_scores, dim=-1)
+            preds.append(probs.argmax(dim=-1))
+            targets.append(labels)
         avg_loss = np.mean(losses)
         history['loss'].append(avg_loss)
-        print("Epoch {} / {}: Loss = {:.3f}".format(epoch+1, args.n_epochs, avg_loss))
+
+        #print("preds", preds)
+        preds = torch.cat(preds)
+        targets = torch.cat(targets)
+        corrects = (preds == targets)
+        accuracy = corrects.sum().float() / float(targets.size(0) )
+        history['acc'].append(accuracy)
+
+        print(f"Epoch {epoch+1} / {args.n_epochs}: Loss = {avg_loss:.3f} Acc = {accuracy:.2f}")
 
     # See what the scores are after training
     with torch.no_grad():
@@ -135,11 +150,19 @@ if __name__ == '__main__':
     
     lstm_choice = "classical" if args.n_qubits == 0 else "quantum"
 
-    plt.figure(figsize=(6, 4))
-    plt.plot(history['loss'], label=f"{lstm_choice} LSTM")
-    plt.title("POS Tagger Training")
-    plt.ylabel("Loss")
-    plt.xlabel("Epoch")
+    #plt.figure(figsize=(6, 4))
+
+    fig, ax1 = plt.subplots()
+
+    ax1.set_xlabel("Epoch")
+    ax1.set_ylabel("Loss")
+    ax1.plot(history['loss'], label=f"{lstm_choice} LSTM Loss")
+
+    ax2 = ax1.twinx()
+    ax2.set_ylabel("Accuracy")
+    ax2.plot(history['acc'], label=f"{lstm_choice} LSTM Accuracy", color='tab:red')
+
+    plt.title("Part-of-Speech Tagger Training")
     plt.ylim(0., 1.5)
     plt.legend(loc="upper right")
 
